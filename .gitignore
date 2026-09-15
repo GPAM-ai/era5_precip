@@ -1,0 +1,12 @@
+dados_processados/
+saidas/
+inspecao_saida/
+logs/
+*.nc
+*.npy
+*.npz
+*.parquet
+*.pkl
+*.csv
+__pycache__/
+*.log

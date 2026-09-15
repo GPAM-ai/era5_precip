@@ -1,0 +1,42 @@
+# Ambiente - Hackathon WorCAP 2026
+#
+# Versoes efetivamente usadas na execucao que produziu o resultado
+# registrado no README (Santos Dumont, particao lncc-cpu_amd).
+#
+# ATENCAO: `conda list --export` NAO captura pacotes instalados por pip.
+# No ambiente original o lightgbm veio por pip e por isso nao aparece no
+# export do conda. Os dois blocos abaixo sao necessarios.
+
+# ---------------------------------------------------------------------
+# conda install -c conda-forge <pacotes abaixo>
+# ---------------------------------------------------------------------
+# python=3.12.7
+# numpy=1.26.4
+# pandas=2.2.2
+# xarray=2023.6.0
+# scipy=1.13.1
+# scikit-learn=1.5.1
+# dask=2024.8.2
+# pyarrow=16.1.0
+# matplotlib=3.9.2
+# h5py=3.11.0
+# pytables=3.10.1
+
+# ---------------------------------------------------------------------
+# pip install <pacotes abaixo>
+# ---------------------------------------------------------------------
+lightgbm==4.7.0
+netCDF4
+
+# ---------------------------------------------------------------------
+# Reproducao a partir do zero
+# ---------------------------------------------------------------------
+# conda create -n hack python=3.12 -y
+# conda activate hack
+# conda install -c conda-forge numpy=1.26.4 pandas=2.2.2 xarray=2023.6.0 \
+#     scipy=1.13.1 scikit-learn=1.5.1 dask=2024.8.2 pyarrow=16.1.0 \
+#     matplotlib=3.9.2 h5py=3.11.0 -y
+# pip install lightgbm==4.7.0 netCDF4
+#
+# O arquivo ambiente_conda.txt, versionado junto, traz o export completo
+# do ambiente original para quem precisar reproduzir exatamente.
