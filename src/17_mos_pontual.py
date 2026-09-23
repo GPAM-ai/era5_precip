@@ -43,7 +43,7 @@ import pandas as pd
 import xarray as xr
 
 SAIDA = "dados_processados"
-DADOS = "dados_brutos"
+DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
 FEATURES = "mme3"
 CORTES = [1997, 2002, 2007, 2012, 2017]
 LAMBDA = 30.0            # regularizacao do ridge (validada abaixo)
@@ -235,7 +235,9 @@ anom_ridge = prever(Xtd, B, pt_prox)
 # anomalia do LightGBM: recupera da submissao (clim v3 + alfa*anom)
 pk = sorted([p for p in os.listdir(SAIDA) if p.startswith("modelo_final_mme3")],
             key=lambda p: os.path.getmtime(f"{SAIDA}/{p}"))[-1]
-alfa = pickle.load(open(f"{SAIDA}/{pk}", "rb"))["alfa"]
+_lg = pickle.load(open(f"{SAIDA}/{pk}", "rb"))
+alfa = _lg["alfa_conservador"] if "conservadora" in arq_sub else _lg["alfa"]
+print(f"  alfa usado ({'conservador' if 'conservadora' in arq_sub else 'principal'}): {alfa:.3f}")
 v3 = np.load(f"{SAIDA}/climatologia_v3.npz")
 mes = partes[1].astype(int).values
 ano_v = partes[0].astype(int).values
