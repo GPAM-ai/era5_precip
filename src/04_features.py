@@ -56,7 +56,7 @@ import xarray as xr
 SAIDA = "dados_processados"
 MODO = sys.argv[1] if len(sys.argv) > 1 else "completo"
 
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 
 LOCAIS = ["a_t2", "a_cloud_cover", "a_shum_850", "a_surface_pressure",
           "a_u_850", "a_v_850", "a_temperature_850", "a_rel_hum_850",

@@ -10,3 +10,11 @@ logs/
 *.csv
 __pycache__/
 *.log
+dados_brutos
+dados_processados/*.npy
+dados_processados/*.nc
+dados_processados/*.parquet
+dados_processados/indices_brutos/*hind*.nc
+dados_processados/indices_brutos/era5_niveis_*.nc
+saidas/*.csv
+logs/

@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 SAIDA = "dados_processados"
 SUBS = "saidas"
 

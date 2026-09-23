@@ -8,7 +8,7 @@ Roda antes de qualquer modelagem. Responde:
   4. formato do sample_submission
 
 Uso:
-    python 00_inspecao.py /prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados
+    python 00_inspecao.py dados_brutos
 """
 
 import sys

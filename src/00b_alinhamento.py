@@ -13,7 +13,7 @@ Uso:
 import numpy as np
 import xarray as xr
 
-D = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+D = "dados_brutos"
 
 sep = lambda t: print("\n" + "=" * 68 + f"\n{t}\n" + "=" * 68)
 

@@ -1,0 +1,14 @@
+{
+  "descricao": "Caminhos usados por prepare_data.py, train.py e predict.py. Ajustar RAW_DATA_DIR para o local dos dados da competicao.",
+  "RAW_DATA_DIR": "dados_brutos",
+  "EXTERNAL_DATA_DIR": "dados_processados/indices_brutos",
+  "PROCESSED_DATA_DIR": "dados_processados",
+  "MODEL_DIR": "dados_processados",
+  "SUBMISSION_DIR": "saidas",
+  "LOGS_DIR": "logs",
+  "FEATURES": "mme3",
+  "LR": "0.02",
+  "N_ARVORES": "1200",
+  "N_SEMENTES": "5",
+  "SEED": 42
+}

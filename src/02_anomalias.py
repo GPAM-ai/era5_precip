@@ -35,7 +35,7 @@ import sys
 import numpy as np
 import xarray as xr
 
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 SAIDA = "dados_processados"
 os.makedirs(SAIDA, exist_ok=True)
 

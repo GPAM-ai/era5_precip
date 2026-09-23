@@ -1,0 +1,7 @@
+.
+./dados_processados
+./dados_processados/indices_brutos
+./inspecao_saida
+./logs
+./saidas
+./src

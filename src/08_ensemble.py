@@ -53,7 +53,7 @@ from sklearn.linear_model import Ridge
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 SAIDA = "dados_processados"
 PARTE = sys.argv[1] if len(sys.argv) > 1 else "tudo"
 

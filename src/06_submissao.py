@@ -51,7 +51,7 @@ import pandas as pd
 import xarray as xr
 import lightgbm as lgb
 
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 SAIDA = "dados_processados"
 SUBS = "saidas"
 
@@ -66,10 +66,16 @@ CORTES = [1997, 2002, 2007, 2012, 2017]
 N_AJUSTE = 2_500_000
 SEMENTE = 42
 
-PARAMS = dict(objective="l2", num_leaves=63, learning_rate=0.05,
+PARAMS = dict(objective="l2",
+              num_leaves=int(os.environ.get("NUM_LEAVES", 63)),
+              learning_rate=float(os.environ.get("LR", 0.05)),
               min_child_samples=200, feature_fraction=0.7,
               bagging_fraction=0.7, bagging_freq=1, lambda_l2=5,
-              n_estimators=400, n_jobs=-1, verbose=-1, random_state=SEMENTE)
+              n_estimators=int(os.environ.get("N_ARVORES", 400)),
+              n_jobs=-1, verbose=-1, random_state=SEMENTE)
+# Com o MME o sinal ficou forte (r 0.44) e o alfa passou de 1: o modelo
+# subestima a amplitude. Capacidade passa a importar. Testar via
+#   N_ARVORES=1000 NUM_LEAVES=127 FEATURES=mme2 python src/06_submissao.py
 
 
 def sep(t):
@@ -103,11 +109,18 @@ def pesos(anos_vec):
 sep("1. CARREGANDO")
 
 t0 = time.time()
-# USAR_SST=1 troca para as matrizes aumentadas com indices NOAA (etapa 09)
-USAR_SST = os.environ.get("USAR_SST", "0") == "1"
-sufixo = "_sst" if USAR_SST else ""
-arq_feat = "features_sst.json" if USAR_SST else "features.json"
-print(f"  variante: {'com indices NOAA' if USAR_SST else 'original'}")
+# FEATURES escolhe o conjunto de matrizes:
+#   (vazio)  -> X_treino.npy          original
+#   sst      -> X_treino_sst.npy      + indices NOAA (09)
+#   grade    -> X_treino_grade.npy    + indices + EOFs de TSM em grade (11)
+# USAR_SST=1 eh mantido como sinonimo de FEATURES=sst
+FEATURES = os.environ.get("FEATURES", "")
+if not FEATURES and os.environ.get("USAR_SST", "0") == "1":
+    FEATURES = "sst"
+USAR_SST = FEATURES != ""
+sufixo = f"_{FEATURES}" if FEATURES else ""
+arq_feat = f"features{sufixo}.json"
+print(f"  variante: {FEATURES or 'original'}")
 
 # sem mmap_mode: leitura sequencial de 7.8 GB leva segundos, enquanto
 # indexacao aleatoria sobre memmap em Lustre leva dezenas de minutos
@@ -297,9 +310,24 @@ y_final = (y_bruto - (nivel_s[mes_alvo - 1, ipt]
 
 idx = rng.choice(len(y_final), min(N_AJUSTE * 2, len(y_final)), replace=False)
 t_fit = time.time()
-final = lgb.LGBMRegressor(**PARAMS)
-final.fit(X[idx], y_final[idx], sample_weight=pesos(anos[idx]))
-print(f"  ajustado em {len(idx):,} linhas ({time.time()-t_fit:.0f}s)")
+
+# MEDIA DE SEMENTES: o bagging (fraction 0.7) introduz variancia de
+# amostragem. Ajustar N modelos com sementes diferentes e tirar a media
+# das previsoes reduz essa variancia sem mexer no vies. Nao precisa de
+# CV para validar: reducao de variancia eh monotona. N_SEMENTES=1
+# reproduz o comportamento anterior.
+N_SEMENTES = int(os.environ.get("N_SEMENTES", 1))
+modelos_finais = []
+for s in range(N_SEMENTES):
+    p = dict(PARAMS, random_state=SEMENTE + s)
+    m = lgb.LGBMRegressor(**p)
+    sub_idx = idx if N_SEMENTES == 1 else \
+        np.random.default_rng(SEMENTE + s).choice(len(y_final), len(idx), replace=False)
+    m.fit(X[sub_idx], y_final[sub_idx], sample_weight=pesos(anos[sub_idx]))
+    modelos_finais.append(m)
+    print(f"  semente {s+1}/{N_SEMENTES} ajustada ({time.time()-t_fit:.0f}s)", flush=True)
+final = modelos_finais[0]
+print(f"  {N_SEMENTES} modelo(s) em {len(idx):,} linhas cada")
 
 imp = pd.DataFrame({"feature": nomes,
                     "gain": final.booster_.feature_importance("gain")})
@@ -310,7 +338,14 @@ grupos = {"estaticas": nomes[:4], "sazonais": nomes[4:6],
                             if n.startswith("pc_") or n.startswith("idx_")],
           "indices_noaa": [n for n in nomes if n.split("_")[0] in
                            ("nino12", "nino34", "nino4", "oni", "tna", "tsa",
-                            "soi", "pdo", "dipolo", "nino")]}
+                            "soi", "pdo", "dipolo", "nino")],
+          "sst_grade": [n for n in nomes if n.startswith("sst_pc")],
+          "nmme": [n for n in nomes if n.startswith("nmme_") or n.startswith("mme")
+                   or n.split("_")[0] in ("cfsv2", "spear", "nasa", "ccsm4", "cansips",
+                                          "seas5", "ukmo", "meteo", "dwd", "cmcc", "jma")],
+          "niveis_sup": [n for n in nomes if n.startswith("pc_z200") or n.startswith("pc_u200")
+                         or n.startswith("pc_v200") or n.startswith("pc_z500")],
+          "mjo": [n for n in nomes if n.startswith("mjo_")]}
 print(f"\n  {'grupo':18s} {'% do ganho':>12s}")
 for g, cols in grupos.items():
     if cols:
@@ -327,9 +362,9 @@ if USAR_SST:
 # ---------------------------------------------------------------------------
 sep("6. PREVISAO E SUBMISSAO")
 
-anom_te = final.predict(Xte).astype("float32")
-print(f"  anomalia prevista: media {anom_te.mean():+.4f}, "
-      f"desvio {anom_te.std():.4f}")
+anom_te = np.mean([m.predict(Xte) for m in modelos_finais], axis=0).astype("float32")
+print(f"  anomalia prevista (media de {N_SEMENTES} semente(s)): "
+      f"media {anom_te.mean():+.4f}, desvio {anom_te.std():.4f}")
 
 sub = pd.read_csv(f"{DADOS}/sample_submission.csv")
 partes = sub["id"].str.split("_", expand=True)
@@ -357,8 +392,12 @@ print(f"  previsao final: media {pred.mean():.4f}, max {pred.max():.2f}")
 
 sub["tp_mm_day"] = pred
 partes_tag = []
-partes_tag.append("sst" if USAR_SST else "nosst")
+partes_tag.append(FEATURES if FEATURES else "nosst")
 partes_tag.append("rec" if TAU is not None else "norec")
+if PARAMS["n_estimators"] != 400 or PARAMS["num_leaves"] != 63:
+    partes_tag.append(f"t{PARAMS['n_estimators']}l{PARAMS['num_leaves']}")
+if N_SEMENTES > 1:
+    partes_tag.append(f"s{N_SEMENTES}")
 tag = "_".join(partes_tag)
 caminho = f"{SUBS}/sub07_{tag}.csv"
 sub.to_csv(caminho, index=False, float_format="%.4f")
@@ -371,9 +410,10 @@ caminho_c = f"{SUBS}/sub07_{tag}_conservadora.csv"
 sub_c.to_csv(caminho_c, index=False, float_format="%.4f")
 
 with open(f"{SAIDA}/modelo_final_{tag}.pkl", "wb") as f:
-    pickle.dump({"modelo": final, "params": PARAMS, "alfa": alfa,
+    pickle.dump({"modelo": final, "modelos": modelos_finais, "n_sementes": N_SEMENTES,
+                 "params": PARAMS, "alfa": alfa,
                  "alfa_conservador": alfa_cons, "tau": TAU,
-                 "usar_sst": USAR_SST,
+                 "usar_sst": USAR_SST, "features": nomes,
                  "config_clim": dict(n=N_JANELA, w=W_MIX, k=K_TEND)}, f)
 res.to_csv(f"{SAIDA}/cv_final_{tag}.csv", index=False)
 
