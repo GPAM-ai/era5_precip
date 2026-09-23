@@ -228,7 +228,7 @@ Correções: descartar TNA/TSA absolutos e manter o dipolo; anomalia móvel de 3
 
 ### 6.4 As duas submissões finais
 
-Diferem em uma única coisa: a presença do ridge pontual. É o componente mais recente e o único com menos histórico de validação. O hedge original em α (principal contra conservadora) perdeu sentido quando o α mínimo entre folds subiu para 0,95 — o modelo com nove sistemas é confiante o bastante em regime fraco para dispensá-lo.
+Diferem em uma única coisa: o fator de encolhimento α — 1,044 (média dos folds) na principal, 0,954 (fold mais difícil, 2013–2017) na conservadora. Ambas usam o ridge pontual combinado. A conservadora cobre o cenário em que 2024, transição para La Niña, peça menos amplitude que a média histórica; no público a diferença entre as duas é 0,003.
 
 ### 6.5 Avaliação fora da amostra (`14_avaliacao.py`)
 
