@@ -4,7 +4,7 @@
 
 Solução para o desafio de prever a precipitação média mensal (mm/dia) do mês seguinte sobre a América do Sul, em 78.561 pontos de grade a 0,25°, a partir de campos atmosféricos de reanálise ERA5 do mês corrente.
 
-**Resultado no placar público (2023): RMSE 1,48895 — 1º lugar**, com 0,035 de vantagem sobre o 2º colocado. A climatologia de referência marca 1,83952; o modelo reduz o erro em 19,1%.
+**Resultado no placar público (2023): RMSE 1,48895**. A climatologia de referência marca 1,83952; o modelo reduz o erro em 19,1%.
 
 ---
 
@@ -26,13 +26,13 @@ Solução para o desafio de prever a precipitação média mensal (mm/dia) do m�
 
 ## 1. Resumo executivo
 
-A precipitação mensal é dominada pelo ciclo sazonal e pelo padrão geográfico, que uma climatologia bem construída captura sem modelo algum. A parte difícil — e a única que vale nota — é a **anomalia**: quanto um mês foge do normal daquele lugar. Com um mês de antecedência, a habilidade disponível para prever essa anomalia a partir de reanálise é pequena: medimos correlação de 0,19 usando apenas os campos entregues pela competição.
+A precipitação mensal é dominada pelo ciclo sazonal e pelo padrão geográfico, que uma climatologia bem construída captura sem modelo algum. A parte difícil é a **anomalia**: quanto um mês foge do normal daquele lugar. Com um mês de antecedência, a habilidade disponível para prever essa anomalia a partir de reanálise é pequena: medimos correlação de 0,19 usando apenas os campos entregues pela competição.
 
 A solução final tem quatro camadas:
 
 1. **Climatologia refinada**: janela de 24 anos misturada ao período completo, com tendência local encolhida. Ganho de 1% sobre a média simples.
-2. **LightGBM global sobre a anomalia**, com atributos de reanálise (anomalias locais e modos de grande escala por EOF), índices de temperatura da superfície do mar (TSM) da NOAA, e — o componente decisivo — **previsões de nove sistemas de previsão sazonal** de sete centros operacionais, usadas como preditores (*Model Output Statistics*). Correlação de anomalia: 0,528.
-3. **Regressão ridge local por ponto de grade** sobre os mesmos sistemas dinâmicos — a formulação clássica de MOS — combinada com o LightGBM em peso fixo validado. As duas formulações erram de jeitos diferentes (correlação 0,85 entre suas previsões); a combinação ganha 0,83 pontos percentuais sobre o LightGBM sozinho.
+2. **LightGBM global sobre a anomalia**, com atributos de reanálise (anomalias locais e modos de grande escala por EOF), índices de temperatura da superfície do mar (TSM) da NOAA, e **previsões de nove sistemas de previsão sazonal** de sete centros operacionais, usadas como preditores (*Model Output Statistics*). Correlação de anomalia: 0,528.
+3. **Regressão ridge local por ponto de grade** sobre os mesmos sistemas dinâmicos, a formulação clássica de MOS, combinada com o LightGBM em peso fixo validado. As duas formulações erram de jeitos diferentes (correlação 0,85 entre suas previsões); a combinação ganha 0,83 pontos percentuais sobre o LightGBM sozinho.
 4. **Duas submissões finais** que diferem apenas na presença da camada 3, cobrindo a hipótese de que a combinação não transfira para 2024.
 
 A conclusão central: **todo ganho relevante veio de informação física nova ou de diversidade de formulação, nunca de capacidade de modelo.** Dezoito hipóteses de modelagem foram testadas com validação cruzada; doze foram rejeitadas. As seis aceitas somam menos de 3 pontos percentuais. A entrada de previsão dinâmica somou 13.
@@ -48,7 +48,7 @@ A conclusão central: **todo ganho relevante veio de informação física nova o
 **O que torna o problema difícil:**
 
 - A anomalia tem desvio-padrão de 1,80 mm/dia. A climatologia, por definição, tem RMSE igual a isso. Todo modelo é medido contra esse piso.
-- Sem TSM nos dados entregues, o ENOS — o principal motor da variabilidade — só entra indiretamente, pela pegada na pressão à superfície.
+- Sem TSM nos dados entregues, o ENOS, o principal responsável da variabilidade, só entra indiretamente, pela pegada na pressão à superfície.
 - O domínio termina em 90°W, cobrindo apenas a borda do Pacífico.
 - 2023 e 2024 são anos de temperatura recorde. Várias variáveis do teste ficam **fora da distribuição de treino**, o que penaliza modelos de árvore, que não extrapolam.
 
@@ -122,7 +122,7 @@ Especificação completa em `dados_processados/features.json`. Quatro grupos:
 | locais | 12 | anomalias das 9 covariáveis + transporte de umidade (`q·u`, `q·v`, convergência) |
 | grande escala | 205 | 8 EOFs por grupo de variáveis com defasagens 1–3 e tendência, mais um índice de pressão do Pacífico |
 
-Todas as covariáveis entram como **anomalias** em relação à climatologia do mês calendário. **Excluída deliberadamente:** a precipitação do mês anterior — existe no treino, mas no teste só há `tp_ultima_obs`, constante em dezembro de 2022 nos 24 meses.
+Todas as covariáveis entram como **anomalias** em relação à climatologia do mês calendário. **Excluída deliberadamente:** a precipitação do mês anterior, existe no treino, mas no teste só há `tp_ultima_obs`, constante em dezembro de 2022 nos 24 meses.
 
 **Validação dos EOFs.** O modo `pc_slp_2` separa meses DJF de El Niño de meses DJF de La Niña em 1,88 desvios-padrão. Um índice manual de pressão no Pacífico dá 1,83 com o mesmo sinal.
 
@@ -151,7 +151,7 @@ As duas visões erram de jeitos diferentes. O ridge pontual não consegue usar o
 - Ridge por ponto (8.787 regressões fechadas, λ=30) sobre 31 colunas: anomalias dos nove sistemas em dois leads, médias, indicadores de disponibilidade, sin/cos do mês.
 - Sozinho: r=0,506, pior que o LightGBM (0,525). **Correlação entre as duas previsões: 0,853.**
 - Combinação `w·lgbm + (1−w)·ridge` com w validado por fold: **0,63 em todos os cinco** (0,64, 0,63, 0,64, 0,63, 0,63).
-- Ganho validado sobre o LightGBM sozinho: **+0,83 p.p.** — o maior ganho de modelagem do projeto.
+- Ganho validado sobre o LightGBM sozinho: **+0,83 p.p.**, o maior ganho de modelagem do projeto.
 
 Previsão final: `climatologia_v3 + α · [w·anom_lgbm + (1−w)·anom_ridge]`, com α = 1,044 (média dos folds).
 
@@ -161,7 +161,7 @@ Previsão final: `climatologia_v3 + α · [w·anom_lgbm + (1−w)·anom_ridge]`,
 
 ### 5.1 O que é e por que é legítimo
 
-*Model Output Statistics* é a técnica padrão de pós-processamento em meteorologia operacional: a saída de um modelo numérico é usada como entrada de um modelo estatístico, que aprende a corrigir viés sistemático e a combiná-la com outras fontes. A previsão oficial de qualquer centro — CPTEC incluso — é produto de MOS.
+*Model Output Statistics* é a técnica padrão de pós-processamento em meteorologia operacional: a saída de um modelo numérico é usada como entrada de um modelo estatístico, que aprende a corrigir viés sistemático e a combiná-la com outras fontes. A previsão oficial de qualquer centro, CPTEC incluso, é produto de MOS.
 
 O regulamento da competição permite dados externos desde que públicos, gratuitos e igualmente acessíveis. O esclarecimento dos organizadores fixa o critério temporal: para prever o mês T, vale qualquer informação que em tese estaria disponível até o fim de T−1, incluindo dados externos, índices climáticos e informação de fora do domínio. Todos os sistemas usados atendem aos dois critérios.
 
@@ -218,23 +218,23 @@ Sempre prevendo o futuro a partir do passado. A climatologia v3 é **reajustada 
 
 Entre as submissões 4 e 7, o CV melhorou em cinco versões consecutivas e o placar piorou em quatro. O diagnóstico (`10_diagnostico_ood.py`): fração do teste fora do intervalo [p1, p99] do treino, por feature. TNA com 58% das linhas de 2023 e **75% de 2024** fora da distribuição. Árvores não extrapolam.
 
-Correções: descartar TNA/TSA absolutos e manter o dipolo; anomalia móvel de 30 anos antes de decompor TSM em grade; alinhamento de grade nos sistemas do Copernicus. Depois disso o CV voltou a prever o placar — e nas últimas seis rodadas acertou a direção em todas.
+Correções: descartar TNA/TSA absolutos e manter o dipolo; anomalia móvel de 30 anos antes de decompor TSM em grade; alinhamento de grade nos sistemas do Copernicus. Depois disso o CV voltou a prever o placar, e nas últimas seis rodadas acertou a direção em todas.
 
 ### 6.3 Sobre overfitting
 
-- O fold ≤2017 avalia 2018–2022 com previsões **operacionais puras**, não hindcast, e dá ganho de 15,9% — no meio dos outros folds.
+- O fold ≤2017 avalia 2018–2022 com previsões **operacionais puras**, não hindcast, e dá ganho de 15,9%, no meio dos outros folds.
 - A magnitude é a da literatura: r de 0,3 a 0,5 para previsão dinâmica de precipitação tropical a um mês.
 - Nenhum parâmetro foi escolhido pelo placar. Os vinte e três envios foram hipóteses formuladas antes, com CV medido antes.
 
 ### 6.4 As duas submissões finais
 
-Diferem em uma única coisa: o fator de encolhimento α — 1,044 (média dos folds) na principal, 0,954 (fold mais difícil, 2013–2017) na conservadora. Ambas usam o ridge pontual combinado. A conservadora cobre o cenário em que 2024, transição para La Niña, peça menos amplitude que a média histórica; no público a diferença entre as duas é 0,003.
+Diferem em uma única coisa: o fator de encolhimento α: 1,044 (média dos folds) na principal, 0,954 (fold mais difícil, 2013–2017) na conservadora. Ambas usam o ridge pontual combinado. A conservadora cobre o cenário em que 2024, transição para La Niña, peça menos amplitude que a média histórica; no público a diferença entre as duas é 0,003.
 
 ### 6.5 Avaliação fora da amostra (`14_avaliacao.py`)
 
 Todas as métricas abaixo vêm de 2,6 milhões de previsões fora da amostra (1998–2022).
 
-**Overfitting.** Correlação dentro do treino 0,601, na validação 0,525. Gap de 0,076 — faixa normal para gradient boosting regularizado (0,05–0,15).
+**Overfitting.** Correlação dentro do treino 0,601, na validação 0,525. Gap de 0,076, faixa normal para gradient boosting regularizado (0,05–0,15).
 
 **Robustez temporal.** Ganho positivo sobre a climatologia em **25 de 25 anos**. Mínimo +8,4% (2013), máximo +23,7% (1998). Média 14,7%, mediana 14,1%: habilidade distribuída, não concentrada.
 
@@ -246,7 +246,7 @@ Todas as métricas abaixo vêm de 2,6 milhões de previsões fora da amostra (19
 | neutro | 10 | 1,821 | 1,549 | +15,0% | 0,526 |
 | La Niña | 9 | 1,811 | 1,572 | +13,2% | 0,496 |
 
-Para 2024 — transição para La Niña — a expectativa é de 13–15% sobre a climatologia no conjunto privado, contra 19% em 2023.
+Para 2024 (transição para La Niña) a expectativa é de 13–15% sobre a climatologia no conjunto privado, contra 19% em 2023.
 
 **Por região.** Nordeste +23,4% (r 0,644), Amazônia norte +17,5%, Sul +16,4%, Centro-Oeste/Sudeste +15,3%, Patagônia +14,8%, oceano +14,6%, Argentina +14,3%, Andes/Peru +13,8%, Amazônia sul +10,9%.
 
@@ -272,7 +272,7 @@ MSSS de 0,15 a 0,30 é considerado bom para precipitação a um mês; a maioria 
 
 O placar público valida 2023. O segundo semestre de 2024 tem um componente que nunca passou por validação: a costura IC3→IC4 do CanSIPS. Sem ler nenhuma observação de 2023 ou 2024, verificou-se:
 
-- A anomalia do CanSIPS em jul–dez/2024 (IC4) tem desvios de 0,71 a 1,05 — indistinguíveis dos 23 meses anteriores (0,72 a 1,16). Não há descontinuidade de escala na costura.
+- A anomalia do CanSIPS em jul–dez/2024 (IC4) tem desvios de 0,71 a 1,05, indistinguíveis dos 23 meses anteriores (0,72 a 1,16). Não há descontinuidade de escala na costura.
 - A previsão final tem amplitude consistente entre os dois anos: desvio 1,067 em 2023, 1,026 em 2024. Nenhum mês fora de 0,7–1,4.
 - 0,47% das linhas acima de 3× a climatologia, concentradas em 2023 e em pontos de climatologia próxima de zero.
 - As duas finais diferem em 0,109 mm/dia em média, idêntico em 2023 e 2024: o ridge pontual se comporta igual nos dois anos.
