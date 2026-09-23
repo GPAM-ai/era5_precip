@@ -1,4 +1,4 @@
-# Model Documentation — Previsão Climática de Precipitação sobre a América do Sul
+# Model Documentation, Previsão Climática de Precipitação sobre a América do Sul
 
 Documento no formato *Kaggle Winning Model Documentation Guidelines*. Complementa o `README.md` do repositório, que contém a discussão técnica completa.
 
@@ -6,26 +6,26 @@ Documento no formato *Kaggle Winning Model Documentation Guidelines*. Complement
 
 ## A1. Background on you/your team
 
-**Competition:** Previsão Climática de Precipitação sobre a América do Sul — Hackathon WorCAP 2026 (INPE)
+**Competition:** Previsão Climática de Precipitação sobre a América do Sul, Hackathon WorCAP 2026 (INPE)
 **Team name:** Rain-NP-Hard
-**Public leaderboard:** RMSE 1,48895, 1º lugar (de N equipes)
-**Private leaderboard:** *(preencher após a divulgação)*
+**Public leaderboard:** RMSE 1,48895, 2º lugar
+**Private leaderboard:** *(aoós divulgação)*
 
-**Membros** *(preencher para cada um: nome, cidade, e-mail, formação e experiência com ML/clima, motivação, horas dedicadas)*
+**Membros**
 
 | membro | localização | e-mail | formação / experiência | horas |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+| Leonardo Arazo de Oliveira Araújo | São José dos Campos, SP | arazo.leonardo@unifesp.br | Graduando em Ciência da Computação, UNIFESP | ~50 h |
+| Prof. Dr. Didier Augusto Vega-Oliveros | São José dos Campos, SP | didier.vega@unifesp.br | Professor Doutor, UNIFESP | ~50 h |
+| Alex Junio Ribeiro Campos | São José dos Campos, SP | alex.campos@unifesp.br | Mestrando em Ciência da Computação, UNIFESP | ~50 h |
 
-**Motivação da equipe:** o problema une dois interesses do grupo — aprendizado de máquina aplicado a geociências e a pergunta de quanto sinal um modelo estatístico consegue extrair de um sistema caótico com um mês de antecedência. A experiência anterior do grupo com estimativa de precipitação por satélite (IMERG/GMI) informou várias decisões de projeto, em particular a de não testar arquiteturas de alta capacidade.
+**Motivação da equipe:** o problema une dois interesses do grupo, aprendizado de máquina aplicado a geociências e a pergunta de quanto sinal um modelo estatístico consegue extrair de um sistema caótico com um mês de antecedência. A experiência anterior do grupo com estimativa de precipitação por satélite (IMERG/GMI) informou várias decisões de projeto, em particular a de não testar arquiteturas de alta capacidade.
 
 ---
 
 ## A2. Summary
 
-A solução decompõe a precipitação em climatologia mais anomalia e modela apenas a anomalia. Dois modelos são combinados: um **LightGBM global** (um modelo para toda a grade, com lat/lon como atributos) e uma **regressão ridge local por ponto de grade**. Ambos recebem como preditores as anomalias de reanálise ERA5 entregues pela competição, índices de temperatura da superfície do mar da NOAA, e — o componente decisivo — as previsões mensais de **nove sistemas de previsão sazonal** de sete centros operacionais (NCEP, GFDL, NASA, ECCC, ECMWF, UKMO, Météo-France, DWD, CMCC), usadas como *Model Output Statistics*. As duas formulações têm correlação de 0,85 entre suas previsões e são combinadas em peso fixo 0,63/0,37, validado por *walk-forward*. Ferramentas: Python 3.12, LightGBM 4.7, xarray, scikit-learn. Treino completo em ~40 minutos num nó de CPU (16 núcleos); predição em ~2 minutos.
+A solução decompõe a precipitação em climatologia mais anomalia e modela apenas a anomalia. Dois modelos são combinados: um **LightGBM global** (um modelo para toda a grade, com lat/lon como atributos) e uma **regressão ridge local por ponto de grade**. Ambos recebem como preditores as anomalias de reanálise ERA5 entregues pela competição, índices de temperatura da superfície do mar da NOAA, e, o componente decisivo, as previsões mensais de **nove sistemas de previsão sazonal** de sete centros operacionais (NCEP, GFDL, NASA, ECCC, ECMWF, UKMO, Météo-France, DWD, CMCC), usadas como *Model Output Statistics*. As duas formulações têm correlação de 0,85 entre suas previsões e são combinadas em peso fixo 0,63/0,37, validado por *walk-forward*. Ferramentas: Python 3.12, LightGBM 4.7, xarray, scikit-learn. Treino completo em ~40 minutos num nó de CPU (16 núcleos); predição em ~2 minutos.
 
 ---
 
@@ -53,13 +53,13 @@ Gráfico das 20 features individuais mais importantes: `figuras/importancia_top2
 ### Features únicas ou não óbvias
 
 1. **Previsões de modelos dinâmicos como preditores.** Cada sistema é anomalizado contra a climatologia do próprio *hindcast*, por ponto e mês calendário, o que remove seu viés médio antes da combinação. Onde um sistema não existe (treino anterior ao hindcast), a coluna recebe zero e um indicador marca a ausência.
-2. **Dipolo do Atlântico (TNA−TSA) em vez das TSMs absolutas.** As absolutas estavam fora da distribuição de treino em 2023–24 (58% e 75% das linhas além do p99 histórico); o gradiente é robusto ao aquecimento uniforme.
+2. **Dipolo do Atlântico (TNA−TSA) em vez das TSMs absolutas.** As absolutas estavam fora da distribuição de treino em 2023–24 (58% e 75% das linhas além do p99 histórico); o gradiente cancela o aquecimento uniforme e fica dentro da distribuição.
 3. **Transporte de umidade** (`q·u`, `q·v`, convergência) construído a partir de umidade específica e vento em 850 hPa, porque a variável fisicamente mais direta para chuva não foi entregue.
 4. **Lag-ensemble:** a previsão emitida um mês antes para o mesmo alvo entra como coluna separada. A média simples com o lead mais antigo piora; o LightGBM aprende a ponderar.
 
 ### Features excluídas deliberadamente
 
-A precipitação do mês anterior — existe no treino, mas no teste só há um valor constante. Treinar com uma feature ausente na inferência seria falha silenciosa.
+A precipitação do mês anterior, existe no treino, mas no teste só há um valor constante. Treinar com uma feature ausente na inferência seria falha silenciosa.
 
 ---
 
@@ -89,7 +89,7 @@ Ajuste final: média de 5 sementes, cada uma sobre 5 milhões de linhas amostrad
 
 ### Encolhimento
 
-`previsão = climatologia_v3 + α · anomalia_final`, com α = 1,044 (média dos folds; o modelo está calibrado — inclinação 1,016 por decil).
+`previsão = climatologia_v3 + α · anomalia_final`, com α = 1,044 (média dos folds; o modelo está calibrado, inclinação 1,016 por decil).
 
 ### Sem ensemble de outros aprendizes
 
@@ -99,15 +99,15 @@ LightGBM + Ridge + MLP foi testado antes da entrada dos dinâmicos e rejeitado. 
 
 ## A5. Interesting findings
 
-**1. Informação vale mais que modelo — por uma ordem de grandeza.** A correlação de anomalia foi de 0,19 (só reanálise) para 0,53 (com nove sistemas dinâmicos). Dezoito hipóteses de modelagem testadas somaram menos de 3 pontos percentuais de ganho; a entrada de previsão dinâmica somou 13.
+**1. Informação vale mais que modelo, por uma ordem de grandeza.** A correlação de anomalia foi de 0,19 (só reanálise) para 0,53 (com nove sistemas dinâmicos). Dezoito hipóteses de modelagem testadas somaram menos de 3 pontos percentuais de ganho; a entrada de previsão dinâmica somou 13.
 
-**2. A validação cruzada divergiu do placar por um motivo físico, não estatístico.** Entre as submissões 4 e 7, o CV melhorou cinco vezes e o placar piorou quatro. O diagnóstico mostrou que TNA e TSA absolutas estavam fora da distribuição de treino em 2023–24 (anos de oceano recorde). Árvores não extrapolam. A correção — usar o gradiente em vez das absolutas — resolveu, e o CV voltou a prever o placar nas seis rodadas seguintes.
+**2. A validação cruzada divergiu do placar por um motivo físico, não estatístico.** Entre as submissões 4 e 7, o CV melhorou cinco vezes e o placar piorou quatro. O diagnóstico mostrou que TNA e TSA absolutas estavam fora da distribuição de treino em 2023–24 (anos de oceano recorde). Árvores não extrapolam. A correção, usar o gradiente em vez das absolutas, resolveu, e o CV voltou a prever o placar nas seis rodadas seguintes.
 
 **3. O peso por recência, que melhorou o CV em cinco de cinco folds, piorou o placar em dois pares comparáveis.** Descartava os El Niños fortes do passado, que são os análogos de 2023. Foi rejeitado pelo placar, não pelo CV.
 
-**4. O SEAS5 do ECMWF sozinho (r=0,514) supera a média dos três modelos americanos do NMME (0,431).** E a média simples de nove sistemas (0,504) fica abaixo do SEAS5 isolado — média simples pesa igual um modelo de 0,51 e um de 0,29. A regressão aprende os pesos.
+**4. O SEAS5 do ECMWF sozinho (r=0,514) supera a média dos três modelos americanos do NMME (0,431).** E a média simples de nove sistemas (0,504) fica abaixo do SEAS5 isolado, média simples pesa igual um modelo de 0,51 e um de 0,29. A regressão aprende os pesos.
 
-**5. MOS local e ML global são complementares.** O ridge por ponto sozinho é pior que o LightGBM (r 0,506 vs 0,525), mas a correlação entre as duas previsões é só 0,85. A combinação ganha 0,83 p.p. — o maior ganho de modelagem do projeto.
+**5. MOS local e ML global são complementares.** O ridge por ponto sozinho é pior que o LightGBM (r 0,506 vs 0,525), mas a correlação entre as duas previsões é só 0,85. A combinação ganha 0,83 p.p., o maior ganho de modelagem do projeto.
 
 **O que não funcionou:** mais componentes de EOF, defasagens longas, mais capacidade no LightGBM, busca de hiperparâmetros, subamostragem espacial mais densa, níveis superiores do ERA5, TSM em grade, α por mês. Todos documentados com números no README.
 
@@ -123,7 +123,7 @@ Um modelo que atinge **~90% do desempenho final** com uma fração da complexida
 
 Estimativa: ganho de ~13% sobre a climatologia (contra 16% do modelo completo), RMSE público em torno de 1,56. Onze colunas em vez de 310.
 
-Uma versão ainda mais simples — **só a média dos cinco sistemas, multiplicada por um α ajustado, somada à climatologia** — dá cerca de 80% do desempenho sem nenhum aprendizado de máquina. É a linha de base que qualquer solução com previsão dinâmica deve superar.
+Uma versão ainda mais simples, **só a média dos cinco sistemas, multiplicada por um α ajustado, somada à climatologia**, dá cerca de 80% do desempenho sem nenhum aprendizado de máquina. É a linha de base que qualquer solução com previsão dinâmica deve superar.
 
 ---
 
@@ -155,7 +155,7 @@ Downloads externos (fora do cluster): NMME via IRI ~30 min; SEAS5 e C3S via Cope
 
 **Dados:** NOAA/PSL climate indices; NMME via IRI Data Library; ECMWF SEAS5 e C3S multi-system via Copernicus Climate Data Store (contém informação modificada do Copernicus Climate Change Service; nem a Comissão Europeia nem o ECMWF são responsáveis pelo uso feito).
 
-**Código:** https://github.com/*(organização)*/era5_precip — licença MIT.
+**Código:** https://github.com/GPAM-ai/era5_precip, licença MIT.
 
 ---
 
