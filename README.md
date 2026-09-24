@@ -307,7 +307,7 @@ O placar público valida 2023. O segundo semestre de 2024 tem um componente que 
 
 ## 8. Fontes de dados externas
 
-Todas públicas, gratuitas e citadas. Os operacionais dos sistemas dinâmicos e os índices estão versionados em `dados_processados/indices_brutos/`; os hindcasts (270 MB a 400 MB por sistema) ficam fora do git e são reproduzidos por `baixar_seas5.py` e `baixar_c3s.py`.
+Todas públicas, gratuitas e citadas. Os operacionais dos sistemas dinâmicos e os índices estão versionados em `dados_processados/indices_brutos/`; os hindcasts (270 MB a 400 MB por sistema) ficam fora do git e são reproduzidos por `baixar_iri.sh`, `baixar_seas5.py` e `baixar_c3s.py`.
 
 - **NOAA/PSL Monthly Climate Indices** — https://psl.noaa.gov/data/timeseries/month/
 - **NOAA ERSST v5** — Huang et al. (2017), doi:10.7289/V5T72FNM. Testado, não adotado.
@@ -348,7 +348,7 @@ src/
   16_alfa_mensal.py            α por mês (não adotado)
   17_mos_pontual.py            ridge por ponto + combinação  ← modelo final
   18_sanidade_2024.py          verificação do privado sem rótulos
-  baixar_seas5.py / baixar_c3s.py / baixar_era5_niveis.py   downloads (fora do cluster)
+  baixar_iri.sh / baixar_seas5.py / baixar_c3s.py / baixar_era5_niveis.py   downloads (fora do cluster)
 ```
 
 ### Reprodução da submissão final
