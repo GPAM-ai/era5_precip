@@ -8,8 +8,8 @@ Documento no formato *Kaggle Winning Model Documentation Guidelines*. Complement
 
 **Competition:** Previsão Climática de Precipitação sobre a América do Sul, Hackathon WorCAP 2026 (INPE)
 **Team name:** Rain-NP-Hard
-**Public leaderboard:** RMSE 1,48895, 2º lugar
-**Private leaderboard:** *(aoós divulgação)*
+**Public leaderboard:** RMSE 1,48895, 1º lugar entre soluções válidas (a entrada com RMSE 0,00002 no placar bruto é incompatível com previsão)
+**Private leaderboard:** *(após divulgação)*
 
 **Membros**
 
