@@ -43,7 +43,7 @@ import pandas as pd
 import xarray as xr
 
 SAIDA = "dados_processados"
-DADOS = "/prj/cptec/alex.campos/satrain/previsao_precipitacao_america_sul/dados"
+DADOS = "dados_brutos"
 FEATURES = "mme3"
 CORTES = [1997, 2002, 2007, 2012, 2017]
 LAMBDA = 30.0            # regularizacao do ridge (validada abaixo)
